@@ -50,14 +50,43 @@ func generateRandomString(length int) string {
 }
 
 func shortenURL(c echo.Context) error {
-	url := new(URL)
-	if err := c.Bind(url); err != nil {
+	// Define a struct for binding the request body
+	type RequestBody struct {
+		LongURL string `json:"long_url"`
+		BaseURL string `json:"base_url"` // Expect base URL in the request
+	}
+
+	// Bind request body to the RequestBody struct
+	reqBody := new(RequestBody)
+	if err := c.Bind(reqBody); err != nil {
 		return err
 	}
-	url.CreatedAt = time.Now()
-	url.ID = generateRandomString(6)
-	url.ShortURL = "http://localhost:3000/" + url.ID
-	db.Create(url)
+
+	// Validate the base URL
+	if reqBody.BaseURL == "" {
+		// Fallback to BASE_URL environment variable
+		reqBody.BaseURL = os.Getenv("BASE_URL")
+		if reqBody.BaseURL == "" {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Base URL is not configured")
+		}
+	}
+
+	// Generate a unique ID
+	id := generateRandomString(6)
+
+	// Create URL record
+	url := &URL{
+		ID:        id,
+		LongURL:   reqBody.LongURL,
+		ShortURL:  reqBody.BaseURL + "/" + id,
+		CreatedAt: time.Now(),
+	}
+
+	// Save URL record to the database
+	if err := db.Create(url).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create URL record")
+	}
+
 	return c.JSON(http.StatusCreated, url)
 }
 

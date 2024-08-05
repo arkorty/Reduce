@@ -12,13 +12,23 @@ export default function Home() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/reduce/shorten`,
-      {
-        long_url: longUrl,
-      },
-    );
-    setShortUrl(response.data.short_url);
+
+    // Use the frontend domain as the base URL
+    const baseURL = window.location.origin;
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/reduce/shorten`,
+        {
+          long_url: longUrl,
+          base_url: baseURL, // Include the frontend domain in the request body
+        },
+      );
+
+      setShortUrl(response.data.short_url);
+    } catch (error) {
+      console.error("Error shortening URL:", error);
+    }
   };
 
   return (
