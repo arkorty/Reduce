@@ -1,0 +1,41 @@
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 15d2ebf..18c00aa 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -8,11 +8,11 @@ services:
+       DB_NAME: urlshortener
+       DB_PASSWORD: password
+     ports:
+-      - "8080:8080"
++      - "8081:8080"
+     depends_on:
+       - postgres
+     networks:
+-      - docker
++      - docker2
+
+   postgres:
+     image: postgres:latest
+@@ -22,9 +22,9 @@ services:
+       POSTGRES_USER: user
+       POSTGRES_PASSWORD: password
+     ports:
+-      - "5432:5432"
++      - "5433:5432"
+     networks:
+-      - docker
++      - docker2
+
+   frontend:
+     build: ./frontend
+@@ -35,8 +35,8 @@ services:
+     depends_on:
+       - backend
+     networks:
+-      - docker
++      - docker2
+
+ networks:
+-  docker:
++  docker2:
+     driver: bridge
