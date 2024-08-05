@@ -90,8 +90,8 @@ func main() {
 		return c.String(http.StatusOK, "Backend is running alright.\n")
 	})
 
-	e.POST("/shorten", shortenURL)
-	e.GET("/:id", fetchLongURL)
+	e.POST("/reduce/shorten", shortenURL)
+	e.GET("/reduce/:id", fetchLongURL)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

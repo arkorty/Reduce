@@ -13,7 +13,7 @@ export default function Home() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/shorten`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/reduce/shorten`,
       {
         long_url: longUrl,
       },
