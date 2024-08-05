@@ -1,0 +1,50 @@
+# Node modules
+frontend/node_modules/
+
+# Build output
+frontend/.next/
+frontend/out/
+frontend/public/static/
+frontend/.cache/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker
+docker-compose.override.yml
+*.dockerignore
+
+# Logs
+*.log
+frontend/*.log
+backend/*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor-specific files
+*.sublime-project
+*.sublime-workspace
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Go build artifacts
+backend/*.exe
+backend/*.test
+backend/*.out
+
+# Database files
+database/*.sql
+
+# Bun lock file
+frontend/bun.lockb
+
+# Miscellaneous
+*.tgz
+*.gz
+*.zip
