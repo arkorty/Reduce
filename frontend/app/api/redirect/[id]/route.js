@@ -17,6 +17,6 @@ export async function GET(request, { params }) {
       return new NextResponse("URL not found", { status: 404 });
     }
   } catch (error) {
-    return new NextResponse("Server error", { status: 500 });
+    return NextResponse.redirect("/error");
   }
 }
