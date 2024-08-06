@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"fmt"
+	"errors"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -31,9 +33,25 @@ func init() {
 	dbPassword := os.Getenv("DB_PASSWORD")
 
 	dsn := "host=" + dbHost + " port=" + dbPort + " user=" + dbUser + " dbname=" + dbName + " password=" + dbPassword + " sslmode=disable"
-	db, err = gorm.Open("postgres", dsn)
+
+	maxRetries := 5
+	retryDelay := 2 * time.Second
+
+	for i := 0; i < maxRetries; i++ {
+		db, err = gorm.Open("postgres", dsn)
+		if err == nil {
+			// Connection successful, break out of the loop
+			break
+		}
+
+		// Log the error and wait before retrying
+		fmt.Printf("Failed to connect to database (attempt %d/%d): %v\n", i+1, maxRetries, err)
+		time.Sleep(retryDelay)
+	}
+
 	if err != nil {
-		panic(err)
+		// Panic if the final attempt also fails
+		panic(fmt.Sprintf("Failed to connect to database after %d attempts: %v", maxRetries, err))
 	}
 
 	// Auto-migrate database
@@ -69,6 +87,16 @@ func shortenURL(c echo.Context) error {
 		if reqBody.BaseURL == "" {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Base URL is not configured")
 		}
+	}
+
+	// Check if the long URL already exists in the database
+	var existingURL URL
+	if err := db.Where("long_url = ?", reqBody.LongURL).First(&existingURL).Error; err == nil {
+		// If the long URL exists, return the existing short URL
+		return c.JSON(http.StatusOK, existingURL)
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		// If there's an error other than record not found, return an error
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check existing URL")
 	}
 
 	// Generate a unique ID
