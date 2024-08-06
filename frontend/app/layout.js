@@ -7,7 +7,7 @@ dotenv.config();
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "URL Shortener",
+  title: "Reduce",
   description: "A simple URL shortener application",
 };
 

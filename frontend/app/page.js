@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import dotenv from "dotenv";
 import { MdContentCopy } from "react-icons/md";
@@ -11,9 +11,20 @@ export default function Home() {
   const [longUrl, setLongUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const [prevLongUrl, setPrevLongUrl] = useState("");
+
+  useEffect(() => {
+    if (prevLongUrl !== longUrl) {
+      setShortUrl("");
+    }
+  }, [longUrl, prevLongUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (longUrl === prevLongUrl && shortUrl) {
+      return;
+    }
 
     // Use the frontend domain as the base URL
     const baseURL = window.location.origin;
@@ -28,6 +39,7 @@ export default function Home() {
       );
 
       setShortUrl(response.data.short_url);
+      setPrevLongUrl(longUrl);
     } catch (error) {
       console.error("Error shortening URL:", error);
     }
@@ -69,15 +81,20 @@ export default function Home() {
         {shortUrl && (
           <div className="mt-4 text-center text-gray-800">
             <div className="flex items-center justify-center space-x-2">
-              <span className="text-blue-500 text-xl underline">
+              <a
+                href={shortUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 text-lg underline"
+              >
                 {shortUrl}
-              </span>
+              </a>
               <button
                 onClick={handleCopy}
                 className={`flex items-center justify-center p-2 rounded-lg transition duration-200 ${copied ? "text-gray-400" : "text-blue-500 hover:text-blue-600"}`}
                 aria-label="Copy to clipboard"
               >
-                <MdContentCopy className="text-xl" />{" "}
+                <MdContentCopy className="text-2xl" />{" "}
                 {/* Adjust the size here */}
               </button>
             </div>
