@@ -15,9 +15,9 @@ export default function ServerErrorPage() {
           Oops! Something went wrong on our end. Please try again later.
         </p>
         <Link href="/">
-          <a className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
+          <span className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
             Go Back to Home
-          </a>
+          </span>
         </Link>
       </div>
     </div>
