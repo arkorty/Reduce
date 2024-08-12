@@ -9,7 +9,7 @@ export async function GET(request, { params }) {
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/reduce/${id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/reduce/${id}`
     );
     if (response.status === 200) {
       return NextResponse.redirect(response.data.long_url);

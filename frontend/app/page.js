@@ -25,7 +25,7 @@ export default function Home() {
         {
           long_url: longUrl,
           base_url: baseURL,
-        },
+        }
       );
 
       setShortUrl(response.data.short_url);

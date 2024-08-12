@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/react": "^18.3.3",
     "axios": "^1.7.3",
     "dotenv": "^16.4.5",
     "next": "14.2.5",
