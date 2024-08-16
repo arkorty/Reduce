@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Reduce",
-  description: "A simple URL shortener application.",
+  description: "A simple URL shortning service.",
   icons: {
     icon: "/favicon.ico",
   },
