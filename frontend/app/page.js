@@ -3,6 +3,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { MdContentCopy } from "react-icons/md";
+import Link from "next/link";
 import QRCode from "react-qr-code";
 
 export default function Home() {
@@ -25,7 +26,7 @@ export default function Home() {
         {
           long_url: longUrl,
           base_url: baseURL,
-        }
+        },
       );
 
       setShortUrl(response.data.short_url);
@@ -84,9 +85,13 @@ export default function Home() {
           {shortUrl && (
             <div className="mt-4 text-center text-gray-800">
               <div className="flex items-center justify-center space-x-2">
-                <span className="text-blue-400 text-xl underline">
+                <Link
+                  href={shortUrl}
+                  className="text-blue-400 text-xl underline"
+                  passHref
+                >
                   {shortUrl}
-                </span>
+                </Link>
                 <button
                   onClick={handleCopy}
                   className={`flex items-center justify-center p-2 rounded-lg transition duration-200 ${
