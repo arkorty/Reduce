@@ -22,7 +22,7 @@ export default function Home() {
     const baseURL = window.location.origin;
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/reduce/shorten`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/shorten`,
         {
           long_url: longUrl,
           base_url: baseURL,
