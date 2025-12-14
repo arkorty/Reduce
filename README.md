@@ -1,4 +1,4 @@
-![reduce.png](blob/reduce.png)
+![reduce.png](blob/cover.png)
 
 # Reduce
 
