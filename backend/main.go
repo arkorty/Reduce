@@ -4,61 +4,18 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"time"
-	"fmt"
+	"os"
 	"errors"
-
+	"strconv"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
 
-var db *gorm.DB
-
-type URL struct {
-	ID        string    `gorm:"primary_key" json:"id"`
-	LongURL   string    `json:"long_url"`
-	ShortURL  string    `json:"short_url"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-func init() {
-	var err error
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbName := os.Getenv("DB_NAME")
-	dbPassword := os.Getenv("DB_PASSWORD")
-
-	dsn := "host=" + dbHost + " port=" + dbPort + " user=" + dbUser + " dbname=" + dbName + " password=" + dbPassword + " sslmode=disable"
-
-	maxRetries := 5
-	retryDelay := 2 * time.Second
-
-	for i := 0; i < maxRetries; i++ {
-		db, err = gorm.Open("postgres", dsn)
-		if err == nil {
-			// Connection successful, break out of the loop
-			break
-		}
-
-		// Log the error and wait before retrying
-		fmt.Printf("Failed to connect to database (attempt %d/%d): %v\n", i+1, maxRetries, err)
-		time.Sleep(retryDelay)
-	}
-
-	if err != nil {
-		// Panic if the final attempt also fails
-		panic(fmt.Sprintf("Failed to connect to database after %d attempts: %v", maxRetries, err))
-	}
-
-	// Auto-migrate database
-	db.AutoMigrate(&URL{})
-}
-
-func generateRandomString(length int) string {
+func codegen(length int) string {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 	bytes := make([]byte, length)
 	for i := range bytes {
@@ -70,7 +27,7 @@ func generateRandomString(length int) string {
 func shortenURL(c echo.Context) error {
 	// Define a struct for binding the request body
 	type RequestBody struct {
-		LongURL string `json:"long_url"`
+		LURL string `json:"lurl"`
 		BaseURL string `json:"base_url"` // Expect base URL in the request
 	}
 
@@ -90,23 +47,31 @@ func shortenURL(c echo.Context) error {
 	}
 
 	// Check if the long URL already exists in the database
-	var existingURL URL
-	if err := db.Where("long_url = ?", reqBody.LongURL).First(&existingURL).Error; err == nil {
+	var existingURL CodeURLMap
+	if err := db.Where("lurl = ?", reqBody.LURL).First(&existingURL).Error; err == nil {
 		// If the long URL exists, return the existing short URL
-		return c.JSON(http.StatusOK, existingURL)
+		return c.JSON(http.StatusOK, map[string]string{
+			"surl": reqBody.BaseURL + "/" + existingURL.Code,
+		})
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		// If there's an error other than record not found, return an error
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check existing URL")
 	}
 
-	// Generate a unique ID
-	id := generateRandomString(6)
+	// Generate a unique code
+	codelen := 6
+	if os.Getenv("CODE_LENGTH") != "" && os.Getenv("CODE_LENGTH") != "0" {
+		t, err := strconv.Atoi(os.Getenv("CODE_LENGTH"))
+		if err == nil {
+			codelen = t
+		}
+	}
+	code := codegen(codelen)
 
 	// Create URL record
-	url := &URL{
-		ID:        id,
-		LongURL:   reqBody.LongURL,
-		ShortURL:  reqBody.BaseURL + "/" + id,
+	url := &CodeURLMap{
+		Code:        code,
+		LURL:   reqBody.LURL,
 		CreatedAt: time.Now(),
 	}
 
@@ -115,17 +80,19 @@ func shortenURL(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create URL record")
 	}
 
-	return c.JSON(http.StatusCreated, url)
+	return c.JSON(http.StatusCreated, map[string]string{
+		"surl": reqBody.BaseURL + "/" + code,
+	})
 }
 
-func fetchLongURL(c echo.Context) error {
-	id := c.Param("id")
-	var url URL
-	if err := db.Where("id = ?", id).First(&url).Error; err != nil {
+func fetchLURL(c echo.Context) error {
+	code := c.Param("code")
+	var url CodeURLMap
+	if err := db.Where("code = ?", code).First(&url).Error; err != nil {
 		log.Println("Error retrieving URL:", err)
 		return echo.NewHTTPError(http.StatusNotFound, "URL not found")
 	}
-	return c.JSON(http.StatusOK, map[string]string{"long_url": url.LongURL})
+	return c.JSON(http.StatusOK, map[string]string{"lurl": url.LURL})
 }
 
 
@@ -148,7 +115,7 @@ func main() {
 	})
 
 	e.POST("/reduce/shorten", shortenURL)
-	e.GET("/reduce/:id", fetchLongURL)
+	e.GET("/reduce/:code", fetchLURL)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

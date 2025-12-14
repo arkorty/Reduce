@@ -1,23 +1,23 @@
-# Use the official Golang image
-FROM golang:1.20-alpine
+FROM golang:1.21-alpine AS builder
 
-# Set the Current Working Directory inside the container
+RUN apk add --no-cache gcc musl-dev
+
 WORKDIR /app
 
-# Copy go mod and sum files
 COPY go.mod go.sum ./
-
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-# Copy the source code into the container
 COPY . .
 
-# Build the Go app
-RUN go build -o main .
+RUN CGO_ENABLED=1 \
+    CGO_CFLAGS="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE" \
+    CGO_LDFLAGS="-lm" \
+    go build -ldflags="-s -w" .
 
-# Expose port 8080 to the outside world
+FROM alpine:latest
+
+COPY --from=builder /app/reduce /reduce
+
 EXPOSE 8080
 
-# Command to run the executable
-CMD ["./main"]
+CMD ["/reduce"]

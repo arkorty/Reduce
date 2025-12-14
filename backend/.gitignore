@@ -1,0 +1,11 @@
+# Go
+bin/
+pkg/
+*.exe
+*.dll
+*.so
+*.test
+*.prof
+.env
+# Local database (if applicable)
+reduce.db
