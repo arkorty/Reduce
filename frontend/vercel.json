@@ -1,17 +1,5 @@
 {
-  "framework": "vite",
-  "routes": [
-    {
-      "src": "/assets/(.*)",
-      "dest": "/frontend/dist/assets/$1"
-    },
-    {
-      "src": "/vite.svg",
-      "dest": "/frontend/dist/vite.svg"
-    },
-    {
-      "src": "/.*",
-      "dest": "/frontend/dist/index.html"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
