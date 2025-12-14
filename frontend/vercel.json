@@ -1,0 +1,9 @@
+{
+  "buildCommand": "bun --cwd frontend install && bun --cwd frontend run build",
+  "outputDirectory": "frontend/dist",
+  "framework": "vite",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/:path*", "destination": "/index.html" }
+  ]
+}

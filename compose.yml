@@ -5,6 +5,7 @@ services:
       DB_PATH: /data/reduce.db
     ports:
       - "8080:8080"
+    platform: linux/amd64
     volumes:
       - ./data:/data
     networks:
