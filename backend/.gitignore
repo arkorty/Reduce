@@ -7,5 +7,9 @@ pkg/
 *.test
 *.prof
 .env
-# Local database (if applicable)
-reduce.db
+
+# Database
+reduce.db*
+
+# Binary
+reduce

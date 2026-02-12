@@ -2,77 +2,99 @@
 
 # Reduce
 
-Reduce is a URL shortening service that allows users to easily shorten long URLs for easy access and sharing. This repository contains both the backend and frontend code for the Reduce application.
+A minimal URL shortener with user accounts, custom short codes, and password-protected links.
 
 ## Features
 
-- URL shortening: Convert long URLs into short, easy-to-share URLs.
-- Automatic URL retrieval: Easily retrieve the original long URL using the short URL.
-- Unique ID generation: Each shortened URL is given a unique, randomly generated ID.
-- Responsive UI: User-friendly interface with React, Tailwind CSS, and MUI components.
+- **Shorten URLs** — works anonymously or logged-in
+- **User accounts** — register / login with username & password (JWT)
+- **Custom short codes** — choose your own slug (logged-in users)
+- **Protected links** — require authentication before redirect (uses account credentials or custom)
+- **Dashboard** — view, edit, and delete your links
+- **Click tracking** — see how many times each link was visited
+- **QR codes** — generated for every shortened URL
 
-## Technologies Used
+## Production
 
-- **Backend**: Go, Echo, GORM
-- **Frontend**: React, Axios, Tailwind CSS, MUI
-- **Database**: PostgreSQL
-- **Containerization**: Docker, Docker Compose
+- **Frontend & Short links**: https://r.webark.in
+- **API**: https://api.r.webark.in
 
-## Getting Started
+## Tech Stack
 
-### Prerequisites
+| Layer    | Stack                          |
+| -------- | ------------------------------ |
+| Backend  | Go · Echo · GORM · SQLite     |
+| Frontend | React · TypeScript · Tailwind  |
+| Auth     | JWT (72 h expiry) · bcrypt     |
 
-- Docker and Docker Compose installed
-- Node.js and npm installed
+## API
 
-### Backend Setup
+### Auth
 
-1. Ensure the environment variables are set:
+| Method | Path              | Auth | Description       |
+| ------ | ----------------- | ---- | ----------------- |
+| POST   | `/auth/register`  | —    | Create account    |
+| POST   | `/auth/login`     | —    | Get JWT token     |
+| GET    | `/auth/me`        | JWT  | Current user info |
 
-   ```
-   DB_HOST=host
-   DB_PORT=port
-   DB_USER=user
-   DB_NAME=name
-   DB_PASSWORD=password
-   BASE_URL=url
-   ```
+### Links (public)
 
-2. Build and run the backend using Docker Compose:
-   ```sh
-   docker-compose up --build
-   ```
+| Method | Path                   | Auth     | Description                           |
+| ------ | ---------------------- | -------- | ------------------------------------- |
+| POST   | `/reduce/shorten`      | Optional | Create short link                     |
+| GET    | `/reduce/:code`        | —        | Resolve short code                    |
+| POST   | `/reduce/:code/verify` | —        | Verify credentials for protected link |
 
-### Frontend Setup
+### Links (dashboard)
 
-1. Navigate to the frontend directory:
+| Method | Path           | Auth | Description     |
+| ------ | -------------- | ---- | --------------- |
+| GET    | `/links`       | JWT  | List your links |
+| PUT    | `/links/:id`   | JWT  | Update a link   |
+| DELETE | `/links/:id`   | JWT  | Delete a link   |
 
-   ```sh
-   cd frontend
-   ```
+## Quick Start
 
-2. Create a `.env.local` file with the following variable:
+### Backend
 
-   ```
-   NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
-   ```
+```bash
+cd backend
+# Edit .env and set a secure JWT_SECRET:
+# openssl rand -base64 32
+go run .
+```
 
-3. Install the dependencies and run the frontend:
-   ```sh
-   npm install
-   npm run dev
-   ```
+### Frontend
 
-## Usage
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-1. Open your browser and navigate to `http://localhost:3000`.
-2. Enter the long URL you want to shorten and click the "Reduce" button.
-3. Copy the shortened URL and share it as needed.
+### Docker
+
+```bash
+JWT_SECRET=$(openssl rand -base64 32) docker compose up --build
+```
+
+## Database
+
+SQLite with two tables:
+
+- **users** — id, username, password (bcrypt), timestamps
+- **links** — id, user_id (nullable), code (unique), long_url, is_custom, requires_auth, access_username, access_password (bcrypt), click_count, timestamps
+
+### Protected Links
+
+When a logged-in user creates a protected link, they can choose:
+- **Use account credentials** — visitors must enter the owner's username/password
+- **Custom credentials** — set specific username/password for this link only
 
 ## Contributing
 
-Thank you for considering contributing to Reduce! We welcome your contributions. Whether it's fixing bugs, adding features, or improving documentation, your help is appreciated. Feel free to report issues or submit pull requests.
+Contributions welcome — feel free to open issues or submit pull requests.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
