@@ -232,43 +232,6 @@ func getMe(c echo.Context) error {
 	})
 }
 
-func updateUsername(c echo.Context) error {
-	uid := c.Get("user_id").(uint)
-	type Req struct {
-		Username string `json:"username"`
-	}
-	r := new(Req)
-	if err := c.Bind(r); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
-	}
-
-	r.Username = strings.TrimSpace(r.Username)
-	if len(r.Username) < 3 || len(r.Username) > 32 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Username must be 3–32 characters")
-	}
-
-	// Check if username is already taken by another user
-	var existing User
-	if db.Where("username = ? AND id != ?", r.Username, uid).First(&existing).Error == nil {
-		return echo.NewHTTPError(http.StatusConflict, "Username already taken")
-	}
-
-	var user User
-	if err := db.First(&user, uid).Error; err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "User not found")
-	}
-
-	user.Username = r.Username
-	if err := db.Save(&user).Error; err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update username")
-	}
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"id":       user.ID,
-		"username": user.Username,
-	})
-}
-
 func updatePassword(c echo.Context) error {
 	uid := c.Get("user_id").(uint)
 	type Req struct {

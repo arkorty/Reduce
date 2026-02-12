@@ -45,7 +45,6 @@ func main() {
 	// User account management
 	user := e.Group("/user", JWTMiddleware)
 	user.GET("/stats", getUserStats)
-	user.PUT("/username", updateUsername)
 	user.PUT("/password", updatePassword)
 	user.DELETE("/account", deleteAccount)
 
