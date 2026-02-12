@@ -44,12 +44,10 @@ func uniqueCode() string {
 // shortenURL creates a new shortened link
 func shortenURL(c echo.Context) error {
 	type Req struct {
-		LongURL        string `json:"lurl"`
-		BaseURL        string `json:"base_url"`
-		Code           string `json:"code"`
-		RequiresAuth   bool   `json:"requires_auth"`
-		AccessUsername string `json:"access_username"`
-		AccessPassword string `json:"access_password"`
+		LongURL      string `json:"lurl"`
+		BaseURL      string `json:"base_url"`
+		Code         string `json:"code"`
+		RequiresAuth bool   `json:"requires_auth"`
 	}
 
 	r := new(Req)
@@ -103,26 +101,14 @@ func shortenURL(c echo.Context) error {
 		UpdatedAt:    time.Now(),
 	}
 
+	// Protected links use the creator's account credentials
 	if r.RequiresAuth {
-		// If no explicit credentials provided, use the logged-in user's credentials
-		if r.AccessUsername == "" && r.AccessPassword == "" && userID != nil {
-			var user User
-			if err := db.First(&user, *userID).Error; err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load user")
-			}
-			link.AccessUsername = user.Username
-			link.AccessPassword = user.Password // Already hashed
-		} else if r.AccessUsername != "" && r.AccessPassword != "" {
-			// Custom credentials provided
-			hash, err := bcrypt.GenerateFromPassword([]byte(r.AccessPassword), bcrypt.DefaultCost)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to process password")
-			}
-			link.AccessUsername = r.AccessUsername
-			link.AccessPassword = string(hash)
-		} else {
-			return echo.NewHTTPError(http.StatusBadRequest, "Access credentials required for protected links")
+		var user User
+		if err := db.First(&user, *userID).Error; err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load user")
 		}
+		link.AccessUsername = user.Username
+		link.AccessPassword = user.Password // Already hashed
 	}
 
 	if err := db.Create(&link).Error; err != nil {
@@ -148,11 +134,10 @@ func fetchLURL(c echo.Context) error {
 	}
 
 	if link.RequiresAuth {
-		// Check if user is authenticated and authorized
-		if username, ok := c.Get("username").(string); ok {
-			// User is logged in, check if they match the access credentials
-			if username == link.AccessUsername {
-				// Auto-authorize logged-in user
+		// Check if user is authenticated and is the link owner
+		if userID, ok := c.Get("user_id").(uint); ok {
+			if link.UserID != nil && *link.UserID == userID {
+				// Auto-authorize link owner
 				db.Model(&link).UpdateColumn("click_count", gorm.Expr("click_count + 1"))
 				return c.JSON(http.StatusOK, map[string]interface{}{
 					"lurl":            link.LongURL,
@@ -162,7 +147,7 @@ func fetchLURL(c echo.Context) error {
 			}
 		}
 
-		// User not logged in or doesn't match - require manual auth
+		// User not logged in or not the owner - require manual auth
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"requires_auth": true,
 			"code":          link.Code,
@@ -204,18 +189,14 @@ func verifyAndRedirect(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 	}
 
-	// Check if access_username matches a user account (owner's credentials)
+	// Verify against the link owner's account password
 	var user User
-	if db.Where("username = ?", link.AccessUsername).First(&user).Error == nil {
-		// Verify against user's account password
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(r.Password)); err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
-		}
-	} else {
-		// Verify against link's custom password
-		if err := bcrypt.CompareHashAndPassword([]byte(link.AccessPassword), []byte(r.Password)); err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
-		}
+	if db.Where("username = ?", link.AccessUsername).First(&user).Error != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to verify credentials")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(r.Password)); err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 	}
 
 	db.Model(&link).UpdateColumn("click_count", gorm.Expr("click_count + 1"))
@@ -246,11 +227,9 @@ func updateLink(c echo.Context) error {
 	}
 
 	type Req struct {
-		Code           *string `json:"code"`
-		LongURL        *string `json:"long_url"`
-		RequiresAuth   *bool   `json:"requires_auth"`
-		AccessUsername *string `json:"access_username"`
-		AccessPassword *string `json:"access_password"`
+		Code         *string `json:"code"`
+		LongURL      *string `json:"long_url"`
+		RequiresAuth *bool   `json:"requires_auth"`
 	}
 
 	r := new(Req)
@@ -279,37 +258,19 @@ func updateLink(c echo.Context) error {
 
 	if r.RequiresAuth != nil {
 		if *r.RequiresAuth {
-			uname := ""
-			if r.AccessUsername != nil {
-				uname = *r.AccessUsername
-			}
-			pass := ""
-			if r.AccessPassword != nil {
-				pass = *r.AccessPassword
-			}
-			if uname == "" || pass == "" {
-				return echo.NewHTTPError(http.StatusBadRequest, "Access credentials required for protected links")
-			}
-			hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to process password")
+			// Enable protection with owner's credentials
+			var user User
+			if err := db.First(&user, uid).Error; err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load user")
 			}
 			link.RequiresAuth = true
-			link.AccessUsername = uname
-			link.AccessPassword = string(hash)
+			link.AccessUsername = user.Username
+			link.AccessPassword = user.Password // Already hashed
 		} else {
+			// Disable protection
 			link.RequiresAuth = false
 			link.AccessUsername = ""
 			link.AccessPassword = ""
-		}
-	} else if link.RequiresAuth {
-		// Auth already on — allow credential updates without toggling
-		if r.AccessUsername != nil && *r.AccessUsername != "" {
-			link.AccessUsername = *r.AccessUsername
-		}
-		if r.AccessPassword != nil && *r.AccessPassword != "" {
-			hash, _ := bcrypt.GenerateFromPassword([]byte(*r.AccessPassword), bcrypt.DefaultCost)
-			link.AccessPassword = string(hash)
 		}
 	}
 

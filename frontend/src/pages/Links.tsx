@@ -215,22 +215,11 @@ interface LinkModalProps {
 }
 
 function LinkModal({ mode, link, onClose, onSaved }: LinkModalProps) {
-  const { user } = useAuth();
   const [longUrl, setLongUrl] = useState(link?.long_url || '');
   const [code, setCode] = useState(link?.code || '');
   const [requiresAuth, setRequiresAuth] = useState(link?.requires_auth || false);
-  const [useOwnCredentials, setUseOwnCredentials] = useState(true);
-  const [accessUsername, setAccessUsername] = useState(link?.access_username || '');
-  const [accessPassword, setAccessPassword] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-
-  // If editing a link with custom credentials (not matching user), default to custom mode
-  useEffect(() => {
-    if (link && link.access_username && link.access_username !== user?.username) {
-      setUseOwnCredentials(false);
-    }
-  }, [link, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,18 +237,12 @@ function LinkModal({ mode, link, onClose, onSaved }: LinkModalProps) {
           base_url: baseURL,
           code: code || undefined,
           requires_auth: requiresAuth,
-          access_username: requiresAuth && accessUsername ? accessUsername : undefined,
-          access_password: requiresAuth && accessPassword ? accessPassword : undefined,
         });
       } else if (link) {
         const body: Record<string, any> = {};
         if (code !== link.code) body.code = code;
         if (longUrl !== link.long_url) body.long_url = longUrl;
         if (requiresAuth !== link.requires_auth) body.requires_auth = requiresAuth;
-        if (requiresAuth) {
-          if (accessUsername) body.access_username = accessUsername;
-          if (accessPassword) body.access_password = accessPassword;
-        }
         await api.put(`/links/${link.id}`, body);
       }
       onSaved();
@@ -334,58 +317,11 @@ function LinkModal({ mode, link, onClose, onSaved }: LinkModalProps) {
             </span>
           </label>
 
-          {/* Auth credentials */}
           {requiresAuth && (
-            <div className="flex flex-col gap-3 pl-4 border-l-2 border-amber-900/50">
-              <label className="flex items-center gap-2 cursor-pointer group text-xs">
-                <input
-                  type="checkbox"
-                  checked={useOwnCredentials}
-                  onChange={(e) => setUseOwnCredentials(e.target.checked)}
-                  className="w-3.5 h-3.5"
-                />
-                <span className="text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                  Use my account credentials
-                </span>
-              </label>
-
-              {useOwnCredentials ? (
-                <p className="text-zinc-600 text-xs">
-                  Visitors will need to enter your account username and password to access this link.
-                </p>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-zinc-500 text-xs uppercase tracking-wider mb-1.5">
-                      Access Username
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="visitor_username"
-                      value={accessUsername}
-                      onChange={(e) => setAccessUsername(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-700 p-3 text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-mono text-sm"
-                      required={requiresAuth && !useOwnCredentials}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-zinc-500 text-xs uppercase tracking-wider mb-1.5">
-                      Access Password{' '}
-                      {mode === 'edit' && (
-                        <span className="text-zinc-700">(leave blank to keep current)</span>
-                      )}
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      value={accessPassword}
-                      onChange={(e) => setAccessPassword(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-700 p-3 text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-mono text-sm"
-                      required={mode === 'create' && requiresAuth && !useOwnCredentials}
-                    />
-                  </div>
-                </>
-              )}
+            <div className="flex flex-col gap-2 pl-4 border-l-2 border-amber-900/50">
+              <p className="text-zinc-600 text-xs">
+                Protected links can only be accessed with your account credentials. You will be auto-authenticated when logged in.
+              </p>
             </div>
           )}
 
