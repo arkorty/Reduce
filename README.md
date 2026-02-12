@@ -41,9 +41,9 @@ A minimal URL shortener with user accounts, custom short codes, and password-pro
 
 | Method | Path                   | Auth     | Description                           |
 | ------ | ---------------------- | -------- | ------------------------------------- |
-| POST   | `/reduce/shorten`      | Optional | Create short link                     |
-| GET    | `/reduce/:code`        | —        | Resolve short code                    |
-| POST   | `/reduce/:code/verify` | —        | Verify credentials for protected link |
+| POST   | `/shorten`      | Optional | Create short link                     |
+| GET    | `/:code`        | —        | Resolve short code                    |
+| POST   | `/:code/verify` | —        | Verify credentials for protected link |
 
 ### Links (dashboard)
 

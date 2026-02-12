@@ -6,6 +6,7 @@ import Redirect from './pages/Redirect';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Links from './pages/Links';
+import User from './pages/User';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/links" element={<Links />} />
+          <Route path="/user" element={<User />} />
           <Route path="/:code" element={<Redirect />} />
         </Routes>
       </BrowserRouter>

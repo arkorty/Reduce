@@ -243,7 +243,7 @@ function LinkModal({ mode, link, onClose, onSaved }: LinkModalProps) {
         const baseURL = window.location.hostname === 'r.webark.in'
           ? 'https://r.webark.in'
           : window.location.origin;
-        await api.post('/reduce/shorten', {
+        await api.post('/shorten', {
           lurl: longUrl,
           base_url: baseURL,
           code: code || undefined,

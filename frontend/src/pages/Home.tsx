@@ -55,7 +55,7 @@ export default function Home() {
         payload.requires_auth = true;
       }
 
-      const response = await api.post('/reduce/shorten', payload);
+      const response = await api.post('/shorten', payload);
 
       setShortUrl(response.data.surl);
       setPrevLongUrl(longUrl);

@@ -17,7 +17,7 @@ export default function Redirect() {
       if (!code) return;
 
       try {
-        const response = await api.get(`/reduce/${code}`);
+        const response = await api.get(`/${code}`);
         if (response.data.requires_auth) {
           setNeedsAuth(true);
         } else if (response.data.lurl) {
@@ -39,7 +39,7 @@ export default function Redirect() {
     setVerifying(true);
 
     try {
-      const res = await api.post(`/reduce/${code}/verify`, { username, password });
+      const res = await api.post(`/${code}/verify`, { username, password });
       if (res.data.lurl) {
         window.location.replace(res.data.lurl);
       } else {

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MdPerson, MdLogout, MdLink } from 'react-icons/md';
+import { MdPerson, MdLogout, MdLink, MdSettings } from 'react-icons/md';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -20,6 +20,14 @@ export default function Navbar() {
               >
                 <MdLink size={16} />
                 Links
+              </Link>
+              <Link
+                to="/user"
+                className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-100 transition-colors text-sm"
+                title="Account Settings"
+              >
+                <MdSettings size={16} />
+                Account
               </Link>
               <span className="text-zinc-600 text-xs font-mono flex items-center gap-1">
                 <MdPerson size={14} />

@@ -148,6 +148,21 @@ func fetchLURL(c echo.Context) error {
 	}
 
 	if link.RequiresAuth {
+		// Check if user is authenticated and authorized
+		if username, ok := c.Get("username").(string); ok {
+			// User is logged in, check if they match the access credentials
+			if username == link.AccessUsername {
+				// Auto-authorize logged-in user
+				db.Model(&link).UpdateColumn("click_count", gorm.Expr("click_count + 1"))
+				return c.JSON(http.StatusOK, map[string]interface{}{
+					"lurl":            link.LongURL,
+					"requires_auth":   false,
+					"auto_authorized": true,
+				})
+			}
+		}
+
+		// User not logged in or doesn't match - require manual auth
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"requires_auth": true,
 			"code":          link.Code,
