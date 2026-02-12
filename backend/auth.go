@@ -187,6 +187,7 @@ func login(c echo.Context) error {
 
 	// Set httpOnly cookie
 	cookie := &http.Cookie{
+		Domain:   os.Getenv("COOKIE_DOMAIN"),
 		Name:     "token",
 		Value:    token,
 		Path:     "/",
@@ -210,6 +211,7 @@ func logout(c echo.Context) error {
 		Path:     "/",
 		HttpOnly: true,
 		MaxAge:   -1, // Delete cookie
+		Domain:   os.Getenv("COOKIE_DOMAIN"),
 	}
 	c.SetCookie(cookie)
 

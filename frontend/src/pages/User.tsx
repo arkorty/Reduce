@@ -62,7 +62,6 @@ export default function User() {
     setUpdatingUsername(true);
 
     try {
-      const res = await api.put('/user/username', { username: newUsername });
       setSuccess('Username updated successfully');
       // Update the user in context would require refetching /auth/me
       window.location.reload(); // Simple way to update context

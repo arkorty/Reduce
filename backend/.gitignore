@@ -1,5 +1,5 @@
-# Go
 bin/
+data/
 pkg/
 *.exe
 *.dll
@@ -7,9 +7,3 @@ pkg/
 *.test
 *.prof
 .env
-
-# Database
-reduce.db*
-
-# Binary
-reduce
